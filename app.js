@@ -11,6 +11,7 @@ var flash = require('connect-flash');
 var app = express();
 
 var index = require('./routes/index');
+var signup = require('./routes/signup');
 var productCatalog = require('./routes/productCatalog');
 var insertForm = require('./routes/insertForm');
 var viewInventory = require('./routes/viewInventory');
@@ -20,7 +21,6 @@ var logout = require('./routes/logout');
 var contact = require('./routes/contact');
 var about = require('./routes/about');
 var login = require('./routes/login');
-var checkout = require('./routes/checkout');
 var geoReport = require('./routes/geoReport');
 
 
@@ -44,7 +44,8 @@ app.use(session({
 app.use(flash());
 
 
-app.use('/', index)/
+app.use('/', index);
+app.use('/signup', signup);
 app.use('/productCatalog', productCatalog);
 app.use('/contact', contact);
 app.use('/about', about);
@@ -54,7 +55,6 @@ app.use('/insertForm', insertForm);
 app.use('/viewInventory', viewInventory);
 app.use('/logout', logout);
 app.use('/login', login);
-app.use('/checkout', checkout);
 app.use('/geoReport', geoReport);
 app.use(express.static("public"));
 
@@ -89,6 +89,66 @@ app.post('/login', function(req, res) {
     })
 });
 
+app.post('/signup', function(req, res) {
+
+    let username = req.body.username;
+    let email = req.body.email;
+    let password = req.body.pword;
+    let passwordConfirmation = req.body.pwordConfirmation;
+
+    if(password.length < 5) {
+        req.flash('message', 'Password needs to be longer than 5 characters')
+        res.redirect('/signup');
+    }
+
+    if(password != passwordConfirmation) {
+        req.flash('message', 'Password Confirmation must match Password')
+        res.redirect('/signup');
+    }
+
+    var queryUser = "SELECT * FROM [dbo].[users] WHERE username = \'"+username+"\';"
+    var queryEmail = "SELECT * FROM [dbo].[users] WHERE email = \'"+email+"\';"
+
+    sql.connect(config, function(err) {
+        if(err) console.log(err);
+        var request = new sql.Request();
+        request.query(queryUser, function(err, recordset) {
+            if(err) {
+                req.flash('message', 'Something went wrong, please try again');
+                res.redirect('/signup');
+            }
+            if(recordset.recordsets[0].length == 0) {
+                var request = new sql.Request();
+                request.query(queryEmail, function(err, recordset) {
+                    if(err) {
+                        req.flash('message', 'Something went wrong, please try again');
+                        res.redirect('/signup');
+                    }
+                    if(recordset.recordsets[0].length == 0) {
+                        var querySignUp = "INSERT INTO [dbo].[users] (username, email, pword) VALUES ('"+req.body.username+"','"+req.body.email+"','"+req.body.pword+"')";
+                        dboperation.insertQuerySignup(querySignUp);
+                        req.flash('message', 'Welcome Aboard! Please user new your credentials to sign in!');
+                        res.redirect('/');
+                    }
+                    else {
+                        req.flash('message', 'This email is already taken');
+                        res.redirect('/signup');
+                    }
+                })
+            }
+            else {
+                req.flash('message', 'This username is already taken');
+                res.redirect('/signup');
+            }
+        })
+    })
+
+});
+
+dboperation.getUsers().then(res => {
+    console.log(res);
+});
+
 app.post('/insertForm', (req, res) => {
     var query = "INSERT INTO [dbo].[products] VALUES(\'"+req.body.productName+"\', \'"+req.body.productType+"\', \'"+req.body.productDesc+"', '"+req.body.size+"', '"+req.body.color+"', "+req.body.price+", "+req.body.productQuantity+", "+req.body.discount+");";
     dboperation.insertQuery(query);
@@ -101,7 +161,6 @@ app.post('/viewSingleProduct', (req, res) => {
         var request = new sql.Request();
         request.query(query, function(err, rows) {
             if(err) res.send(err);
-            console.log(req.body.isAdmin);
             res.render('singleProduct', {data: rows.recordsets[0], userID: req.body.userID, isAdmin: req.body.isAdmin})
         })
     })
