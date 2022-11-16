@@ -37,6 +37,11 @@
       
           <button type = "submit"><a href="/insertForm">Insert</a></button>
         </div>
+        <% if(message.length > 0) { %>
+          <div class = "alert" role = "alert">
+              <%= message %>
+          </div>
+        <%} %>
       
         <div class="container" style="background-color:#f1f1f1">
           <a href='/mainAdmin'>Go Back</a>

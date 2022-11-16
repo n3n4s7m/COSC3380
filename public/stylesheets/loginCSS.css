@@ -1,7 +1,6 @@
 form {
-    border: 3px solid #f1f1f1;
-  }
-  
+  border: 3px solid #f1f1f1;
+}
   /* Full-width inputs */
   input[type=text], input[type=password] {
     width: 100%;
@@ -28,12 +27,6 @@ form {
     opacity: 0.8;
   }
   
-  /* Extra style for the cancel button (red) */
-  .cancelbtn {
-    width: auto;
-    padding: 10px 18px;
-    background-color: #f44336;
-  }
   
   /* Center the avatar image inside this container */
   .imgcontainer {
@@ -49,24 +42,25 @@ form {
   
   /* Add padding to containers */
   .container {
-    padding: 40px;
+    text-align: left;
+    padding: 30px;
   }
+
 
  .alert {
     color: red;
  }
 
-  
-  
   /* The "Forgot password" text */
   span.psw {
-    float: right;
-    padding-top: 35px;
+    display: block;
+    padding-top: 10px;
   }
 
   span.GoBack {
-    float: left;
-    padding-top: 35px;
+    display: block;
+    padding-top: 10px;
+    padding-bottom: 0px;
   }
   
   /* Change styles for span and cancel button on extra small screens */

@@ -14,6 +14,7 @@ var index = require('./routes/index');
 var signup = require('./routes/signup');
 var productCatalog = require('./routes/productCatalog');
 var insertForm = require('./routes/insertForm');
+var insertSupplier = require('./routes/insertSupplier');
 var viewInventory = require('./routes/viewInventory');
 var mainAdmin = require('./routes/mainAdmin');
 var mainUser = require('./routes/mainUser');
@@ -21,6 +22,7 @@ var logout = require('./routes/logout');
 var contact = require('./routes/contact');
 var about = require('./routes/about');
 var login = require('./routes/login');
+var checkout = require('./routes/checkout');
 var geoReport = require('./routes/geoReport');
 
 
@@ -52,9 +54,11 @@ app.use('/about', about);
 app.use('/mainAdmin', mainAdmin)
 app.use('/mainUser', mainUser);
 app.use('/insertForm', insertForm);
+app.use('/insertSupplier', insertSupplier);
 app.use('/viewInventory', viewInventory);
 app.use('/logout', logout);
 app.use('/login', login);
+app.use('/checkout', checkout);
 app.use('/geoReport', geoReport);
 app.use(express.static("public"));
 
@@ -145,14 +149,63 @@ app.post('/signup', function(req, res) {
 
 });
 
-dboperation.getUsers().then(res => {
-    console.log(res);
+app.post('/insertForm', (req, res) => {
+    sql.connect(config, function(err) {
+        if(err) res.send(err);
+        var request = new sql.Request();
+        var query = "SELECT * FROM [dbo].[products] WHERE fullName = '"+req.body.productName+"' AND size = '"+req.body.size+"' AND color = '"+req.body.color+"';";
+        request.query(query, function(err, row1) {
+            if(err) {
+                res.send(err);
+            }
+            if(row1.recordsets[0].length == 0) {
+                var query = "INSERT INTO [dbo].[products] (fullName, productType, prodDesc, size, color, price, productQuantity, discount) VALUES('"+req.body.productName+"', '"+req.body.productType+"', '"+req.body.productDesc+"', '"+req.body.size+"', '"+req.body.color+"', "+req.body.price+", "+req.body.productQuantity+", "+req.body.discount+");";
+                request.query(query, function(err) {
+                    if(err) res.send(err);
+                    var query = "SELECT * FROM [dbo].[suppliers] WHERE supplierProdType = '"+req.body.productType+"';";
+                    request.query(query, function(err, row2) {
+                        if(err) {
+                            res.send(err);
+                        }
+                        if(row2.recordsets[0].length == 0) {
+                            req.flash('message', 'Product successfully entered into database');
+                            res.render('insertSupplier', { title: 'Insert Supplier', data: req.body, message: req.flash('message')});
+                        }
+                        else {
+                            req.flash('message', 'Product successfully entered into database');
+                            res.render('insertForm', {message: req.flash('message')});
+                        }
+                    })
+                })
+            }
+            else {
+                req.flash('message', 'Product already exists in database');
+                res.render('insertForm', {message: req.flash('message')});
+            }
+        })
+    })
 });
 
-app.post('/insertForm', (req, res) => {
-    var query = "INSERT INTO [dbo].[products] VALUES(\'"+req.body.productName+"\', \'"+req.body.productType+"\', \'"+req.body.productDesc+"', '"+req.body.size+"', '"+req.body.color+"', "+req.body.price+", "+req.body.productQuantity+", "+req.body.discount+");";
-    dboperation.insertQuery(query);
-});
+app.post('/insertSupplier', (req, res) => {
+    sql.connect(config, function(err) {
+        if(err) {
+            res.send(err);
+        }
+        var query = "INSERT INTO [dbo].[suppliers] (supplierName, supplierStreetname, supplierCity, supplierState, supplierZcode, supplierCountry, supplierProdType) VALUES('"+req.body.supplierName+"', '"+req.body.supplierStreet+"', '"+req.body.supplierCity+"', '"+req.body.supplierState+"', '"+req.body.supplierZipCode+"', '"+req.body.supplierCountry+"', '"+req.body.supplierProdType+"');";
+        console.log(query);
+        var request = new sql.Request();
+        request.query(query, function(err) {
+            if(err) {
+                req.flash('message', 'Supplier was not entered correctly, please try again');
+                res.render('insertSupplier', {title: 'Insert Supplier', data: req.body, message: req.flash('message')});
+            }
+            else {
+                req.flash('message', 'Supplier successfully entered into database');
+                res.render('insertForm', {title: 'Insert Products', message: req.flash('message')});
+            }
+        })
+    })
+})
 
 app.post('/viewSingleProduct', (req, res) => {
     var query = "SELECT * FROM [dbo].[products] WHERE fullName = '"+req.body.fullName+"';";
@@ -161,6 +214,7 @@ app.post('/viewSingleProduct', (req, res) => {
         var request = new sql.Request();
         request.query(query, function(err, rows) {
             if(err) res.send(err);
+            console.log(req.body.isAdmin);
             res.render('singleProduct', {data: rows.recordsets[0], userID: req.body.userID, isAdmin: req.body.isAdmin})
         })
     })
