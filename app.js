@@ -20,6 +20,7 @@ var logout = require('./routes/logout');
 var contact = require('./routes/contact');
 var about = require('./routes/about');
 var login = require('./routes/login');
+var checkout = require('./routes/checkout');
 var geoReport = require('./routes/geoReport');
 
 
@@ -53,6 +54,7 @@ app.use('/insertForm', insertForm);
 app.use('/viewInventory', viewInventory);
 app.use('/logout', logout);
 app.use('/login', login);
+app.use('/checkout', checkout);
 app.use('/geoReport', geoReport);
 app.use(express.static("public"));
 
@@ -99,6 +101,7 @@ app.post('/viewSingleProduct', (req, res) => {
         var request = new sql.Request();
         request.query(query, function(err, rows) {
             if(err) res.send(err);
+            console.log(req.body.isAdmin);
             res.render('singleProduct', {data: rows.recordsets[0], userID: req.body.userID, isAdmin: req.body.isAdmin})
         })
     })
