@@ -5,7 +5,7 @@ var sql = require('mssql');
 
 /* GET insert product page. */
 router.get('/', function(req, res, next) {
-    var query = "SELECT * FROM [dbo].[orders] ORDER BY orderDate;";
+    var query = "SELECT * FROM [dbo].[orders] ORDER BY orderID;";
     sql.connect(config, function(err) {
         if(err) console.log(err);
         var request = new sql.Request();
