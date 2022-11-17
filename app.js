@@ -24,6 +24,7 @@ var about = require('./routes/about');
 var login = require('./routes/login');
 var checkout = require('./routes/checkout');
 var geoReport = require('./routes/geoReport');
+var orderprocessing = require('./routes/orderprocessing');
 
 
 
@@ -60,6 +61,7 @@ app.use('/logout', logout);
 app.use('/login', login);
 app.use('/checkout', checkout);
 app.use('/geoReport', geoReport);
+app.use('/orderprocessing', orderprocessing);
 app.use(express.static("public"));
 
 
@@ -219,7 +221,23 @@ app.post('/viewSingleProduct', (req, res) => {
         })
     })
 })
-
+app.post('/orderStatusUpdate', (req, res) => {
+    orderID = req.body.orderID;
+    orderStatus = req.body.orderStatus;
+    sql.connect(config, function(err) {
+        if(err) res.send(err);
+        var request = new sql.Request();
+        var query = "UPDATE [dbo].[orders] SET [orderStatus] = "+orderStatus+" WHERE [orderID] = "+orderID+";";
+                    var request = new sql.Request();
+                    request.query(query, function(err) {
+                        if(err) res.send(err);
+                        else {
+                            req.flash('message', 'Successfully update order status');
+                            res.redirect('orderprocessing');
+                        }
+                    })
+    })
+})
 app.post('/addToCart', (req, res) => {
     productID = req.body.productID;
     userID = req.body.userID;
